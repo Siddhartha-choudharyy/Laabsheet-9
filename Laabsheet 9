@@ -1,0 +1,277 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <iomanip>
+#include <cmath>
+
+using namespace std;
+
+
+const int MAX_USERS = 50;
+const int MAX_EXPENSES = 500;
+const string USER_FILE = "users.txt";
+const string EXPENSE_FILE = "expenses.txt";
+
+struct User {
+    string username;
+    string password;
+    double monthlyBudget;
+};
+
+
+struct Expense {
+    string username;
+    string date;        // फॉर्मेट: YYYY-MM-DD
+    string category;    // Food, Travel, Bills, etc.
+    double amount;
+    string description;
+};
+
+
+User users[MAX_USERS];
+int userCount = 0;
+
+Expense expenses[MAX_EXPENSES];
+int expenseCount = 0;
+
+
+string loggedInUser = ""; 
+
+
+void loadDataFromFiles();
+void saveDataToFiles();
+void checkAndInitializeFiles();
+bool executeUserRegistration();
+bool executeUserLogin();
+void addNewDailyExpense();
+void viewExpenseHistoryLog();
+void viewCategoryWiseAnalysis();
+void generateMonthlyReportLog();
+void configureMonthlyBudget();
+void evaluateBudgetWarning();
+void executeExpensePrediction();
+void searchExpenseRecords();
+void deleteSelectedExpense();
+void sortExpensesChronologically();
+void resetTerminalScreen();
+
+
+int main() {
+ा
+    checkAndInitializeFiles();
+    loadDataFromFiles();
+    
+    int userMenuSelection;
+    
+    while (true) {
+        if (loggedInUser.empty()) {
+            
+            resetTerminalScreen();
+            cout << "==================================================\n";
+            cout << "        SMART EXPENSE MANAGEMENT SYSTEM           \n";
+            cout << "==================================================\n";
+            cout << "1. User Registration\n";
+            cout << "2. User Login System\n";
+            cout << "3. Terminate Application (Exit)\n";
+            cout << "--------------------------------------------------\n";
+            cout << "Select an option: ";
+            cin >> userMenuSelection;
+            
+            if (cin.fail()) { 
+                cin.clear(); 
+                cin.ignore(1000, '\n'); 
+                continue; 
+            }
+
+            switch (userMenuSelection) {
+                case 1:
+                    if (executeUserRegistration()) {
+                        saveDataToFiles();
+                    }
+                    break;
+                case 2:
+                    if (executeUserLogin()) {
+                        cout << "\nAccess Granted. Welcome back, " << loggedInUser << ".\n";
+                        cout << "Press Enter to load your dashboard...";
+                        cin.ignore(); cin.get();
+                    }
+                    break;
+                case 3:
+                    saveDataToFiles();
+                    cout << "\nAll changes written to file systems. Exiting program safely.\n";
+                    return 0;
+                default:
+                    cout << "Invalid choice! Press Enter to try again...";
+                    cin.ignore(); cin.get();
+            }
+        } else {
+            
+            resetTerminalScreen();
+            evaluateBudgetWarning(); ी
+            cout << "==================================================\n";
+            cout << " User Session: " << loggedInUser << " | TRACKING MAIN MENU\n";
+            cout << "==================================================\n";
+            cout << "1. Add Daily Expense\n";
+            cout << "2. View Expense History\n";
+            cout << "3. Category-wise Spending Analysis\n";
+            cout << "4. Generate Monthly Report\n";
+            cout << "5. Configure Monthly Budget Limit\n";
+            cout << "6. Search Expense Logs\n";
+            cout << "7. Delete Expense Record\n";
+            cout << "8. Project Future Spending Prediction\n";
+            cout << "9. Log Out Securely\n";
+            cout << "10. Save Data & Close Program\n";
+            cout << "--------------------------------------------------\n";
+            cout << "Choose an operation (1-10): ";
+            cin >> userMenuSelection;
+            
+            if (cin.fail()) { 
+                cin.clear(); 
+                cin.ignore(1000, '\n'); 
+                continue; 
+            }
+
+            switch (userMenuSelection) {
+                case 1: addNewDailyExpense(); saveDataToFiles(); break;
+                case 2: viewExpenseHistoryLog(); break;
+                case 3: viewCategoryWiseAnalysis(); break;
+                case 4: generateMonthlyReportLog(); break;
+                case 5: configureMonthlyBudget(); saveDataToFiles(); break;
+                case 6: searchExpenseRecords(); break;
+                case 7: deleteSelectedExpense(); saveDataToFiles(); break;
+                case 8: executeExpensePrediction(); break;
+                case 9: 
+                    loggedInUser = ""; 
+                    cout << "\nLogged out successfully.\nPress Enter to return to login menu...";
+                    cin.ignore(); cin.get();
+                    break;
+                case 10:
+                    saveDataToFiles();
+                    cout << "\nAll data saved to storage units successfully. Goodbye!\n";
+                    return 0;
+                default:
+                    cout << "Invalid choice! Press Enter to refresh view...";
+                    cin.ignore(); cin.get();
+            }
+        }
+    }
+}
+
+void checkAndInitializeFiles() {
+    ofstream userStream(USER_FILE, ios::app); userStream.close();
+    ofstream expenseStream(EXPENSE_FILE, ios::app); expenseStream.close();
+}
+
+// Module 12:
+void loadDataFromFiles() {
+    userCount = 0;
+    expenseCount = 0;
+    
+    ifstream userReader(USER_FILE);
+    if (userReader.is_open()) {
+        while (userReader >> users[userCount].username 
+                          >> users[userCount].password 
+                          >> users[userCount].monthlyBudget) {
+            userCount++;
+            if (userCount >= MAX_USERS) break;
+        }
+        userReader.close();
+    }
+    
+    ifstream expenseReader(EXPENSE_FILE);
+    if (expenseReader.is_open()) {
+        while (expenseReader >> expenses[expenseCount].username 
+                            >> expenses[expenseCount].date 
+                            >> expenses[expenseCount].category 
+                            >> expenses[expenseCount].amount) {
+            expenseReader.ignore(); 
+            getline(expenseReader, expenses[expenseCount].description);
+            expenseCount++;
+            if (expenseCount >= MAX_EXPENSES) break;
+        }
+        expenseReader.close();
+    }
+}
+ा
+void saveDataToFiles() {
+    ofstream userWriter(USER_FILE, ios::trunc);
+    for (int i = 0; i < userCount; i++) {
+        userWriter << users[i].username << " " 
+                   << users[i].password << " " 
+                   << users[i].monthlyBudget << "\n";
+    }
+    userWriter.close();
+    
+    ofstream expenseWriter(EXPENSE_FILE, ios::trunc);
+    for (int i = 0; i < expenseCount; i++) {
+        expenseWriter << expenses[i].username << " " 
+                      << expenses[i].date << " " 
+                      << expenses[i].category << " " 
+                      << expenses[i].amount << " " 
+                      << expenses[i].description << "\n";
+    }
+    expenseWriter.close();
+}
+
+ा
+bool executeUserRegistration() {
+    cout << "\n--- PROFILE REGISTRATION SUBSYSTEM ---\n";
+    string targetUser, targetPassword;
+    cout << "Enter unique username (no spaces allowed): ";
+    cin >> targetUser;
+    
+    
+    for (int i = 0; i < userCount; i++) {
+        if (users[i].username == targetUser) {
+            cout << "Error: Username already registered!\nPress Enter...";
+            cin.ignore(); cin.get();
+            return false;
+        }
+    }
+    
+    cout << "Enter account security password: ";
+    cin >> targetPassword;
+    
+    if (userCount < MAX_USERS) {
+        users[userCount].username = targetUser;
+        users[userCount].password = targetPassword;
+        users[userCount].monthlyBudget = 0.0; // डिफ़ॉल्ट बजट 0 सेट होगा
+        userCount++;
+        cout << "Account registered successfully!\nPress Enter to log in...";
+        cin.ignore(); cin.get();
+        return true;
+    }
+    cout << "Error: System storage full!\n";
+    return false;
+}
+
+
+bool executeUserLogin() {
+    cout << "\n--- IDENTITY AUTHENTICATION GATEWAY ---\n";
+    string inputUser, inputPassword;
+    cout << "Username: ";
+    cin >> inputUser;
+    cout << "Password: ";
+    cin >> inputPassword;
+    
+    for (int i = 0; i < userCount; i++) {
+        if (users[i].username == inputUser && users[i].password == inputPassword) {
+            loggedInUser = inputUser;
+            return true;
+        }
+    }
+    cout << "Access Denied: Invalid username or password.\nPress Enter...";
+    cin.ignore(); cin.get();
+    return false;
+}
+ा
+void addNewDailyExpense() {
+    if (expenseCount >= MAX_EXPENSES) {
+        cout << "Database full. Cannot record new items.\n";
+        return;
+    }
+    
+    Expense temporaryRecord;
+    temporaryRecord.username = loggedInUser;
+    
+    cout << "\n--- RECORD NEW TRANSACTIONS OUTFLOW ---\n";
